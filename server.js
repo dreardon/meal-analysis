@@ -25,26 +25,17 @@ const auth = new GoogleAuth({
 
 const oAuth2Client = new OAuth2Client();
 
-async function getEmailFromIapJwt(iapJwt) {
-    if (!iapJwt) return "user-unique-id";
+async function getEmailFromIdToken(idToken) {
+    if (!idToken) return "user-unique-id";
     try {
-        const response = await oAuth2Client.getIapPublicKeys();
-        
-        // Extract audience safely to avoid hardcoding environment variables, but keep signature verification
-        const payloadStr = Buffer.from(iapJwt.split('.')[1], 'base64').toString('utf-8');
-        const payloadObj = JSON.parse(payloadStr);
-        const expectedAudience = payloadObj.aud; 
-        
-        const ticket = await oAuth2Client.verifySignedJwtWithCertsAsync(
-            iapJwt,
-            response.pubkeys,
-            expectedAudience,
-            ['https://cloud.google.com/iap']
-        );
+        const ticket = await oAuth2Client.verifyIdToken({
+            idToken: idToken,
+            audience: process.env.VITE_GOOGLE_CLIENT_ID,
+        });
         const payload = ticket.getPayload();
         return payload.email || "user-unique-id";
     } catch (e) {
-        console.error("IAP JWT Verification Failed:", e);
+        console.error("ID Token Verification Failed:", e);
         return "user-unique-id";
     }
 }
@@ -67,8 +58,8 @@ const getBaseUrl = () => {
 
 app.post('/api/session', async (req, res) => {
     try {
-        const iapJwt = req.headers['x-goog-iap-jwt-assertion'] || req.headers['X-Goog-IAP-JWT-Assertion'];
-        const userEmail = await getEmailFromIapJwt(iapJwt);
+        const idToken = req.headers['x-user-id-token'];
+        const userEmail = await getEmailFromIdToken(idToken);
         if (req.body && req.body.input) req.body.input.user_id = userEmail;
 
         const baseUrl = getBaseUrl();
@@ -103,8 +94,8 @@ app.post('/api/session', async (req, res) => {
 
 app.post('/api/streamQuery', async (req, res) => {
     try {
-        const iapJwt = req.headers['x-goog-iap-jwt-assertion'] || req.headers['X-Goog-IAP-JWT-Assertion'];
-        const userEmail = await getEmailFromIapJwt(iapJwt);
+        const idToken = req.headers['x-user-id-token'];
+        const userEmail = await getEmailFromIdToken(idToken);
         if (req.body && req.body.input) req.body.input.user_id = userEmail;
 
         const baseUrl = getBaseUrl();

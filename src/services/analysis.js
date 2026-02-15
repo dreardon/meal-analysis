@@ -9,9 +9,10 @@ const fileToBase64 = (file) => new Promise((resolve, reject) => {
     reader.onerror = error => reject(error);
 });
 
-export async function analyzeFoodImage(file, onProgress) {
+export async function analyzeFoodImage(file, idToken, onProgress) {
     const headers = {
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+        "X-User-Id-Token": idToken || ""
     };
 
     try {

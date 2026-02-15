@@ -7,6 +7,8 @@ This project provides a comprehensive solution for analyzing food images to esti
 1.  **AI Agent (Backend)**: deployed to **Vertex AI Agent Engine**, capable of visual identification, research, and nutritional estimation.
 2.  **Web Application (Frontend)**: A React-based interface deployed to **Cloud Run**, allowing users to capture/upload images and interact with the agent directly.
 
+![Meal Analysis UI](./images/report.png)
+
 ## Operational Process
 
 - **Visual Identification & Deconstruction**: The agent identifies distinct components (whole foods, branded goods) and analyzes contextual cues for portion sizing.
@@ -39,7 +41,6 @@ printf 'y' | gcloud services enable cloudresourcemanager.googleapis.com
 printf 'y' | gcloud services enable aiplatform.googleapis.com
 printf 'y' | gcloud services enable cloudbuild.googleapis.com
 printf 'y' | gcloud services enable run.googleapis.com
-printf 'y' | gcloud services enable iap.googleapis.com
 ```
 
 # Create Agent Engine Staging Bucket
@@ -116,26 +117,66 @@ Deploy the managed backend to Vertex AI. Run the python deployment script to dep
 
 ## Deploy the Web App
 
-Deploy the frontend to Cloud Run. 
+### Deploy the Firebase Application
 
-**Configure Environment**: You need the `REASONING_ENGINE_URL_BASE` variable for the Cloud Run build.
+- Create Firebase Project: Navigate to the Firebase Console and create a new Web project and associate it with your Google Cloud Project.
+- Enable Authentication: Under Build > Authentication, enable the Google Sign-In provider.
+- Enable Firestore Database: Under Build > Firestore, standard mode, enable a new database (start in Production mode is fine, we will update rules next).
+- Enable Firebase Storage: Under Build > Storage, start the service (start in Production mode is fine, we will update rules next).
+- Get Config keys: Navigate to Project settings > Your apps to copy the new configuration parameters for your web app.
+- Stringify the configuration object and save it inside your local `.env` file as `VITE_FIREBASE_CONFIG` along with exporting it to your terminal:
+
+  ```bash
+  export VITE_FIREBASE_CONFIG='{"apiKey": "AIzaSy...", "authDomain": "...", "projectId": "...", "storageBucket": "...", "messagingSenderId": "...", "appId": "..."}'
+  echo -e "VITE_FIREBASE_CONFIG='$VITE_FIREBASE_CONFIG'" >> .env
+  ```
+
+### Securing Firebase Resources
+To ensure users can only ever access their own scans, you must apply the following specific rules in your Firebase console.
+
+**Firestore Security Rules:**
+```json
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /scans/{document} {
+      allow read, write: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
+    }
+  }
+}
+```
+
+**Firebase Storage Security Rules:**
+```json
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /scans/{userId}/{allPaths=**} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+  }
+}
+```
+### Deploy the Frontend to Cloud Run. 
+
+**Configure Environment**: You need the `REASONING_ENGINE_URL_BASE` and `VITE_GOOGLE_CLIENT_ID` variables for the Cloud Run deployment.
 
   ```bash
   # This URL should match your deployed Agent Engine resource name from the previous step
   export REASONING_ENGINE_URL_BASE="https://$GOOGLE_CLOUD_LOCATION-aiplatform.googleapis.com/v1/$AGENT_NAME"
   echo -e "\nREASONING_ENGINE_URL_BASE=$REASONING_ENGINE_URL_BASE" >> .env
+
+  # Obtain a client ID from the OAuth consent screen
+  export VITE_GOOGLE_CLIENT_ID="<YOUR_GOOGLE_CLIENT_ID>"
+  echo -e "VITE_GOOGLE_CLIENT_ID=$VITE_GOOGLE_CLIENT_ID" >> .env
   ```
 
 **Submit Build**: Use Cloud Build to build the Docker image and deploy to Cloud Run.
 
 ```bash
 gcloud builds submit --config cloudbuild.yaml \
-  --substitutions=_REASONING_ENGINE_URL_BASE="$REASONING_ENGINE_URL_BASE"
-
-gcloud run services add-iam-policy-binding meal-analysis \
-  --region=$GOOGLE_CLOUD_LOCATION \
-  --member=serviceAccount:service-$PROJECT_NUMBER@gcp-sa-iap.iam.gserviceaccount.com \
-  --role=roles/run.invoker
+  --substitutions=_REASONING_ENGINE_URL_BASE="$REASONING_ENGINE_URL_BASE",_GOOGLE_CLIENT_ID="$VITE_GOOGLE_CLIENT_ID",_FIREBASE_CONFIG="$VITE_FIREBASE_CONFIG"
 ```
 
 ## Test Locally

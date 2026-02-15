@@ -18,33 +18,14 @@ export default function CameraCapture({ onCapture }) {
     };
 
     return (
-        <div className="fade-in" style={{
-            flex: 1,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '2rem'
-        }}>
+        <div className="fade-in centered-view">
             <div style={{ textAlign: 'center' }}>
                 <h2 className="text-gradient" style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>Scan Your Meal</h2>
                 <p style={{ color: 'var(--text-muted)' }}>Get instant nutrition insights.</p>
             </div>
 
             <div
-                className="glass-panel"
-                style={{
-                    width: '200px',
-                    height: '200px',
-                    borderRadius: '50%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    cursor: 'pointer',
-                    border: '2px solid var(--color-primary)',
-                    boxShadow: '0 0 30px var(--color-primary-glow)',
-                    transition: 'transform 0.2s',
-                }}
+                className="glass-panel camera-trigger"
                 onClick={triggerInput}
                 onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.95)'}
                 onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}

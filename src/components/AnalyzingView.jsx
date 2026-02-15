@@ -72,125 +72,106 @@ export default function AnalyzingView({ imagePreview, analysisProgress }) {
 
 
     return (
-        <div className="fade-in" style={{
-            flex: 1,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '2rem 1rem'
-        }}>
+        <div className="fade-in analyzing-view" style={{ padding: '2rem 1rem' }}>
             <h2 className="text-gradient" style={{ marginBottom: '2.5rem', fontSize: '1.8rem' }}>AI Agent Analysis</h2>
 
-            <div style={{
-                position: 'relative',
-                width: '240px',
-                height: '240px',
-                borderRadius: 'var(--radius-lg)',
-                overflow: 'hidden',
-                border: 'var(--glass-border)',
-                boxShadow: 'var(--shadow-lg)',
-                marginBottom: '2.5rem'
-            }}>
-                {/* Background Image Preview */}
-                {imagePreview ? (
-                    <img
-                        src={imagePreview}
-                        alt="Analyzing"
-                        style={{ width: '100%', height: '100%', objectFit: 'cover', filter: 'brightness(0.7) blur(2px)' }}
-                    />
-                ) : (
-                    <div style={{ width: '100%', height: '100%', background: 'var(--bg-card)' }} />
-                )}
+            <div className="split-layout analysis-content" style={{ maxWidth: '1000px' }}>
+                <div className="analysis-image-wrapper">
+                    {/* Background Image Preview */}
+                    {imagePreview ? (
+                        <img
+                            src={imagePreview}
+                            alt="Analyzing"
+                            style={{ width: '100%', height: '100%', objectFit: 'cover', filter: 'brightness(0.7) blur(2px)' }}
+                        />
+                    ) : (
+                        <div style={{ width: '100%', height: '100%', background: 'var(--bg-card)' }} />
+                    )}
 
-                {/* Scanning Overlay (Keeping the cool sliding animation) */}
-                <div style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    background: 'linear-gradient(to bottom, transparent, rgba(99, 102, 241, 0.3), transparent)',
-                    animation: 'scan 2.5s ease-in-out infinite',
-                    borderBottom: '3px solid var(--color-primary)',
-                    boxShadow: '0 4px 20px rgba(99, 102, 241, 0.4)'
-                }}></div>
-            </div>
+                    {/* Scanning Overlay (Keeping the cool sliding animation) */}
+                    <div style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        background: 'linear-gradient(to bottom, transparent, rgba(99, 102, 241, 0.3), transparent)',
+                        animation: 'scan 2.5s ease-in-out infinite',
+                        borderBottom: '3px solid var(--color-primary)',
+                        boxShadow: '0 4px 20px rgba(99, 102, 241, 0.4)'
+                    }}></div>
+                </div>
 
-            {/* Agent Progress Stages */}
-            <div style={{
-                width: '100%',
-                maxWidth: '320px',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '1rem'
-            }}>
-                {STAGES.map((stage, index) => {
-                    const isActive = index === currentStageIndex && !completedStages.has(index);
-                    const isCompleted = completedStages.has(index) || index < currentStageIndex;
+                {/* Agent Progress Stages */}
+                <div className="agent-list-wrapper">
+                    {STAGES.map((stage, index) => {
+                        const isActive = index === currentStageIndex && !completedStages.has(index);
+                        const isCompleted = completedStages.has(index) || index < currentStageIndex;
 
-                    const rawMsg = agentMessages[stage.id];
-                    const { displaySub, hasData } = formatAgentMessage(rawMsg, stage.defaultSub);
+                        const rawMsg = agentMessages[stage.id];
+                        const { displaySub, hasData } = formatAgentMessage(rawMsg, stage.defaultSub);
 
-                    return (
-                        <div
-                            key={stage.id}
-                            className="glass-panel"
-                            style={{
-                                padding: '1rem',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '1rem',
-                                opacity: isActive || isCompleted ? 1 : 0.4,
-                                transform: isActive ? 'scale(1.02)' : 'scale(1)',
-                                transition: 'all 0.4s ease',
-                                borderLeft: isActive ? '4px solid var(--color-primary)' : isCompleted ? '4px solid #10b981' : '4px solid transparent'
-                            }}
-                        >
-                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '24px' }}>
-                                {isCompleted ? (
-                                    <CheckCircle2 size={20} color="#10b981" />
-                                ) : isActive ? (
-                                    <Loader2 size={20} className="spin" color="var(--color-primary)" />
-                                ) : (
-                                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'rgba(255,255,255,0.2)' }} />
-                                )}
-                            </div>
-                            <div style={{ flex: 1 }}>
-                                <div style={{
-                                    fontWeight: '700',
-                                    fontSize: '0.95rem',
-                                    color: isActive ? 'var(--text-main)' : isCompleted ? 'var(--text-muted)' : 'var(--text-muted)'
-                                }}>
-                                    {stage.label}
+                        return (
+                            <div
+                                key={stage.id}
+                                className="glass-panel"
+                                style={{
+                                    padding: '1.25rem', /* Increased padding */
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '1.25rem',
+                                    opacity: isActive || isCompleted ? 1 : 0.4,
+                                    transform: isActive ? 'scale(1.02)' : 'scale(1)',
+                                    transition: 'all 0.4s ease',
+                                    borderLeft: isActive ? '4px solid var(--color-primary)' : isCompleted ? '4px solid #10b981' : '4px solid transparent',
+                                    minHeight: '80px' /* Ensure consistent height */
+                                }}
+                            >
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '28px' }}>
+                                    {isCompleted ? (
+                                        <CheckCircle2 size={24} color="#10b981" />
+                                    ) : isActive ? (
+                                            <Loader2 size={24} className="spin" color="var(--color-primary)" />
+                                        ) : (
+                                        <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: 'rgba(255,255,255,0.2)' }} />
+                                    )}
                                 </div>
-                                {(isActive || isCompleted) && (
+                                <div style={{ flex: 1 }}>
                                     <div style={{
-                                        fontSize: '0.75rem',
-                                        color: isActive ? 'var(--color-primary)' : 'var(--text-muted)',
-                                        fontWeight: '500',
-                                        marginTop: '0.25rem',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: '0.25rem'
+                                        fontWeight: '700',
+                                        fontSize: '1rem', /* Larger font */
+                                        color: isActive ? 'var(--text-main)' : isCompleted ? 'var(--text-muted)' : 'var(--text-muted)',
+                                        marginBottom: '0.25rem'
                                     }}>
-                                        {hasData && <MessageSquare size={12} />}
-                                        <span style={{
-                                            display: '-webkit-box',
-                                            WebkitLineClamp: isActive ? 4 : 2, // Expand height slightly while active to show comma lists nicely
-                                            WebkitBoxOrient: 'vertical',
-                                            overflow: 'hidden',
-                                            lineHeight: 1.4,
-                                            wordBreak: 'break-word'
-                                        }}>
-                                            {displaySub}
-                                        </span>
+                                        {stage.label}
                                     </div>
-                                )}
+                                    {(isActive || isCompleted) && (
+                                        <div style={{
+                                            fontSize: '0.85rem', /* Larger font */
+                                            color: isActive ? 'var(--color-primary)' : 'var(--text-muted)',
+                                            fontWeight: '500',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '0.4rem'
+                                        }}>
+                                            {hasData && <MessageSquare size={14} />}
+                                            <span style={{
+                                                display: '-webkit-box',
+                                                WebkitLineClamp: isActive ? 4 : 2,
+                                                WebkitBoxOrient: 'vertical',
+                                                overflow: 'hidden',
+                                                lineHeight: 1.5,
+                                                wordBreak: 'break-word'
+                                            }}>
+                                                {displaySub}
+                                            </span>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
-                        </div>
-                    );
-                })}
+                        );
+                    })}
+                </div>
             </div>
 
             <style>{`

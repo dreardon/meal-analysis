@@ -10,9 +10,13 @@
     "start": "node --env-file=.env server.js"
   },
   "dependencies": {
+    "@react-oauth/google": "^0.13.4",
     "express": "^5.2.1",
+    "firebase": "^12.9.0",
     "google-auth-library": "^10.5.0",
+    "jwt-decode": "^4.0.0",
     "lucide-react": "^0.563.0",
+    "md5": "^2.3.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0"
   },

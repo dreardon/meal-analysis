@@ -52,7 +52,7 @@ export default function NutritionResult({ data, imagePreview, onReset }) {
             </div>
 
             {/* Summary Grid */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem', marginBottom: '2rem' }}>
+            <div className="result-grid">
                 <NutritionCard
                     icon={<Flame size={20} color="#f59e0b" />}
                     label="Calories"
@@ -83,35 +83,41 @@ export default function NutritionResult({ data, imagePreview, onReset }) {
                 />
             </div>
 
-            {/* Individual Componets Breakdown */}
-            <h3 style={{ fontSize: '1.2rem', fontWeight: '700', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <Info size={18} color="var(--color-primary)" />
-                Plate Breakdown
-            </h3>
+            <div className="split-layout" style={{ alignItems: 'start' }}>
+                {/* Individual Componets Breakdown */}
+                <div style={{ width: '100%' }}>
+                    <h3 style={{ fontSize: '1.2rem', fontWeight: '700', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <Info size={18} color="var(--color-primary)" />
+                        Plate Breakdown
+                    </h3>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '2.5rem' }}>
-                {data.items && data.items.map((item, index) => (
-                    <div key={index} className="glass-panel" style={{ padding: '1.2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderLeft: `4px solid var(--color-primary)` }}>
-                        <div style={{ flex: 1 }}>
-                            <div style={{ fontWeight: '700', fontSize: '1.05rem', marginBottom: '0.2rem' }}>{item.name}</div>
-                            <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>{item.portion}</div>
-                        </div>
-                        <div style={{ textAlign: 'right', display: 'flex', flexWrap: 'wrap', gap: '0.4rem', justifyContent: 'flex-end', maxWidth: '180px' }}>
-                            {item.calories !== undefined && <Tag label=" cals" value={item.calories} />}
-                            {item.protein !== undefined && <Tag label=" protein" value={item.protein} color="#ef4444" />}
-                            {item.carbs !== undefined && <Tag label=" carbs" value={item.carbs} color="#3b82f6" />}
-                            {item.fat !== undefined && <Tag label=" fats" value={item.fat} color="#10b981" />}
-                        </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '2.5rem' }}>
+                        {data.items && data.items.map((item, index) => (
+                            <div key={index} className="glass-panel" style={{ padding: '1.2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderLeft: `4px solid var(--color-primary)` }}>
+                                <div style={{ flex: 1 }}>
+                                    <div style={{ fontWeight: '700', fontSize: '1.05rem', marginBottom: '0.2rem' }}>{item.name}</div>
+                                    <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>{item.portion}</div>
+                                </div>
+                                <div style={{ textAlign: 'right', display: 'flex', flexWrap: 'wrap', gap: '0.4rem', justifyContent: 'flex-end', maxWidth: '180px' }}>
+                                    {item.calories !== undefined && <Tag label=" cals" value={item.calories} />}
+                                    {item.protein !== undefined && <Tag label=" protein" value={item.protein} color="#ef4444" />}
+                                    {item.carbs !== undefined && <Tag label=" carbs" value={item.carbs} color="#3b82f6" />}
+                                    {item.fat !== undefined && <Tag label=" fats" value={item.fat} color="#10b981" />}
+                                </div>
+                            </div>
+                        ))}
                     </div>
-                ))}
-            </div>
+                </div>
 
-            {/* Insights Section */}
-            <div className="glass-panel" style={{ padding: '1.5rem', background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(236, 72, 153, 0.1))' }}>
-                <h4 style={{ marginTop: 0, fontSize: '1.1rem', marginBottom: '0.8rem' }}>Dietitian's Insights</h4>
-                <p style={{ color: 'var(--text-main)', fontSize: '0.95rem', lineHeight: '1.7', margin: 0, opacity: 0.9 }}>
-                    {data.description}
-                </p>
+                {/* Insights Section */}
+                <div style={{ width: '100%' }}>
+                    <div className="glass-panel" style={{ padding: '1.5rem', background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(236, 72, 153, 0.1))' }}>
+                        <h4 style={{ marginTop: 0, fontSize: '1.1rem', marginBottom: '0.8rem' }}>Dietitian's Insights</h4>
+                        <p style={{ color: 'var(--text-main)', fontSize: '0.95rem', lineHeight: '1.7', margin: 0, opacity: 0.9 }}>
+                            {data.description}
+                        </p>
+                    </div>
+                </div>
             </div>
         </div>
     );
