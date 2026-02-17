@@ -1,5 +1,5 @@
 # Build Stage
-FROM node:22.15.1-slim AS build
+FROM node:25.6.1-slim AS build
 WORKDIR /app
 COPY package*.json ./
 RUN npm install
@@ -7,7 +7,7 @@ COPY . .
 RUN npm run build
 
 # Production Stage: Node API + Static Files
-FROM node:22.15.1-slim
+FROM node:25.6.1-slim
 WORKDIR /app
 COPY package*.json ./
 RUN npm install --omit=dev  
