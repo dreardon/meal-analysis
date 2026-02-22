@@ -1,0 +1,78 @@
+name: Deploy Meal Analysis
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  PROJECT_ID: mealplateanalysisv4
+  REGION: us-central1
+  IMAGE_NAME: meal-analysis-app
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: 'read'
+      id-token: 'write' # Required for Workload Identity Federation
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    - id: 'auth'
+      name: 'Authenticate to Google Cloud'
+      uses: 'google-github-actions/auth@v2'
+      with:
+        workload_identity_provider: '${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}'
+        service_account: '${{ secrets.GCP_SERVICE_ACCOUNT }}'
+
+    - name: 'Set up Cloud SDK'
+      uses: 'google-github-actions/setup-gcloud@v2'
+
+    - name: 'Set up Terraform'
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: 1.5.0
+
+    - name: 'Terraform Init & Base Apply'
+      run: |
+        echo 'terraform { backend "gcs" {} }' > backend.tf
+        terraform init \
+          -backend-config="bucket=${{ env.PROJECT_ID }}-terraform-remote-backend" \
+          -backend-config="prefix=terraform/state"
+        terraform apply -auto-approve
+        terraform output -json > tf_outputs.json
+
+    - name: 'Authorize Docker Push'
+      run: gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev
+
+    - name: 'Build Docker Image'
+      run: |
+        # Parse Terraform outputs dynamically using jq
+        export _VITE_FIREBASE_API_KEY=$(jq -r '.firebase_api_key.value' tf_outputs.json)
+        export _VITE_FIREBASE_AUTH_DOMAIN=$(jq -r '.firebase_auth_domain.value' tf_outputs.json)
+        export _VITE_FIREBASE_APP_ID=$(jq -r '.firebase_app_id.value' tf_outputs.json)
+        export _VITE_FIREBASE_MESSAGING_SENDER_ID=$(jq -r '.firebase_messaging_sender_id.value' tf_outputs.json)
+        export _VITE_FIREBASE_PROJECT_ID=${{ env.PROJECT_ID }}
+        export _VITE_FIREBASE_STORAGE_BUCKET=$(jq -r '.firebase_storage_bucket.value' tf_outputs.json)
+        
+        docker build \
+          --build-arg _VITE_GOOGLE_CLIENT_ID=${{ secrets.VITE_GOOGLE_CLIENT_ID }} \
+          --build-arg _VITE_FIREBASE_API_KEY=$${_VITE_FIREBASE_API_KEY} \
+          --build-arg _VITE_FIREBASE_AUTH_DOMAIN=$${_VITE_FIREBASE_AUTH_DOMAIN} \
+          --build-arg _VITE_FIREBASE_PROJECT_ID=$${_VITE_FIREBASE_PROJECT_ID} \
+          --build-arg _VITE_FIREBASE_STORAGE_BUCKET=$${_VITE_FIREBASE_STORAGE_BUCKET} \
+          --build-arg _VITE_FIREBASE_MESSAGING_SENDER_ID=$${_VITE_FIREBASE_MESSAGING_SENDER_ID} \
+          --build-arg _VITE_FIREBASE_APP_ID=$${_VITE_FIREBASE_APP_ID} \
+          -t ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/meal-analysis-repo/${{ env.IMAGE_NAME }}:${{ github.sha }} \
+          .
+
+    - name: 'Push Docker Image'
+      run: |
+        docker push ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/meal-analysis-repo/${{ env.IMAGE_NAME }}:${{ github.sha }}
+
+    - name: 'Full Terraform Apply'
+      run: |
+        terraform apply -auto-approve -var="app_image=${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/meal-analysis-repo/${{ env.IMAGE_NAME }}:${{ github.sha }}"

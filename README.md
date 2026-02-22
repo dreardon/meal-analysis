@@ -53,9 +53,9 @@ Before Cloud Build can automatically deploy the application on every git push, y
     ```
 
 3.  **Apply Base Infrastructure**:
-    Run a targeted apply to stand up *only* the foundation without attempting to build the Docker image or deploy the Cloud Run service yet.
+    Run a targeted apply to stand up *only* the foundation without attempting to build the Docker image or deploy the Cloud Run service yet. This will also stand up Workload Identity capabilities for GitHub Actions!
     ```bash
-    terraform apply -target="google_project_service.apis" -target="google_firebase_project.default" -target="google_firebase_web_app.default"
+    terraform apply -target="google_project_service.apis" -target="google_firebase_project.default" -target="google_firebase_web_app.default" -target="google_iam_workload_identity_pool_provider.github" -target="google_service_account_iam_member.github_workload_identity"
     ```
 
 4.  **Enable Firebase Authentication Manually**:
@@ -91,33 +91,42 @@ Before Cloud Build can automatically deploy the application on every git push, y
     ```
     *(Note: Answer "yes" when asked if you want to copy the state to the new backend.)*
 
-### Phase 2: GitOps Automated Deployments
+### Phase 2: Github ActionsAutomated Deployments
 
-Now that the foundation exists and the Terraform state is safely stored in Google Cloud, you can hand off orchestration to Cloud Build.
+Now that the foundation exists and the Terraform state is safely stored in Google Cloud, you can hand off orchestration to GitHub Actions!
 
-1.  **Configure Cloud Build Trigger**:
-    - Go to Cloud Build in the GCP Console and connect your GitHub repository.
-    - Create a Push-to-branch trigger for the `main` branch.
-    - In the trigger settings, add a Substitution Variable:
-      - Variable: `_VITE_GOOGLE_CLIENT_ID`
-      - Value: *(Paste the OAuth CLIENT_ID from Phase 1)*
+We've provisioned **Workload Identity Federation** in Terraform during Phase 1 so GitHub can securely deploy to Google Cloud without needing a static JSON service account key.
 
-2.  **Trigger the Pipeline**:
+1.  **Retrieve Secure Outputs**:
+    Run `terraform output` locally to view the dynamic configurations:
+    ```bash
+    terraform output workload_identity_provider
+    terraform output service_account_email
+    ```
+
+2.  **Configure GitHub Secrets**:
+    - Go to your GitHub repository -> **Settings** -> **Secrets and variables** -> **Actions**.
+    - Create the following three **Repository Secrets**:
+      1. `GCP_WORKLOAD_IDENTITY_PROVIDER`: Paste the exact string from your terraform output above.
+      2. `GCP_SERVICE_ACCOUNT`: Paste the exact service account email string from your terraform output.
+      3. `VITE_GOOGLE_CLIENT_ID`: Paste the OAuth Client ID you created in Phase 1 setup.
+
+3.  **Trigger the Pipeline**:
     Commit your code and push to the `main` branch:
     ```bash
     git push origin main
     ```
-    - Cloud Build will automatically initialize the GCS backend state bucket.
+    - GitHub Actions will effortlessly authenticate via OIDC (Workload Identity).
     - It will run `terraform apply` to deploy the Agent Engine.
-    - It will build the Vite app with the injected Firebase secrets, package it into Docker, and push it to Artifact Registry.
-    - Finally, it will update Cloud Run with the new image.
+    - It will build the Vite app with the injected Firebase secrets using `jq`, package it into Docker, and push it to Artifact Registry.
+    - Finally, it will run a second Terraform pass to update Cloud Run with the new image.
 
-3.  **Finalize OAuth**:
-    Once the pipeline finishes, grab the deployed Cloud Run URL from the Cloud console and add it to your OAuth Client ID authorized origins.
+4.  **Finalize OAuth**:
+    Once the Actions Run finishes successfully, grab the deployed Cloud Run URL from the Cloud console and add it to your OAuth Client ID authorized origins.
 
 ## Outputs
 
-After a successful Cloud Build deployment, Terraform stores outputs in its GCS remote state:
+After a successful GitHub Actions deployment, Terraform stores outputs in its GCS remote state:
 - `cloud_run_url`: Example: `https://meal-analysis-service-...-uc.a.run.app`
 - `agent_staging_bucket`: The GCS bucket used for agent code.
 
