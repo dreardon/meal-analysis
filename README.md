@@ -106,10 +106,11 @@ We've provisioned **Workload Identity Federation** in Terraform during Phase 1 s
 
 2.  **Configure GitHub Secrets**:
     - Go to your GitHub repository -> **Settings** -> **Secrets and variables** -> **Actions**.
-    - Create the following three **Repository Secrets**:
-      1. `GCP_WORKLOAD_IDENTITY_PROVIDER`: Paste the exact string from your terraform output above.
-      2. `GCP_SERVICE_ACCOUNT`: Paste the exact service account email string from your terraform output.
-      3. `VITE_GOOGLE_CLIENT_ID`: Paste the OAuth Client ID you created in Phase 1 setup.
+    - Create the following four **Repository Secrets**:
+      1. `GCP_PROJECT_ID`: Paste your Google Cloud Project ID (e.g., `mealplateanalysisv4`).
+      2. `GCP_WORKLOAD_IDENTITY_PROVIDER`: Paste the exact string from your terraform output.
+      3. `GCP_SERVICE_ACCOUNT`: Paste the exact service account email string from your terraform output.
+      4. `VITE_GOOGLE_CLIENT_ID`: Paste the OAuth Client ID you created in Phase 1 setup.
 
 3.  **Trigger the Pipeline**:
     Commit your code and push to the `main` branch:

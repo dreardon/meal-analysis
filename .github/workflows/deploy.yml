@@ -6,7 +6,7 @@ on:
       - main
 
 env:
-  PROJECT_ID: mealplateanalysisv4
+  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
   REGION: us-central1
   IMAGE_NAME: meal-analysis-app
 
@@ -38,10 +38,15 @@ jobs:
 
     - name: 'Terraform Init & Base Apply'
       run: |
-        echo 'terraform { backend "gcs" {} }' > backend.tf
-        terraform init \
-          -backend-config="bucket=${{ env.PROJECT_ID }}-terraform-remote-backend" \
-          -backend-config="prefix=terraform/state"
+        cat <<EOF > backend.tf
+        terraform {
+          backend "gcs" {
+            bucket = "${{ env.PROJECT_ID }}-terraform-remote-backend"
+            prefix = "terraform/state"
+          }
+        }
+        EOF
+        terraform init
         terraform apply -auto-approve
         terraform output -json > tf_outputs.json
 
