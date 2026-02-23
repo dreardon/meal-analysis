@@ -73,6 +73,12 @@ resource "time_sleep" "wait_for_apis" {
   depends_on      = [google_project_service.apis]
 }
 
+# Wait for Org Policy to fully propagate
+resource "time_sleep" "wait_for_org_policy" {
+  create_duration = "60s"
+  depends_on      = [google_org_policy_policy.cloud_run_public]
+}
+
 # Get project info for service account
 data "google_project" "project" {
   project_id = google_project.default.project_id

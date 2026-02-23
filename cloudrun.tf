@@ -63,7 +63,8 @@ resource "google_cloud_run_v2_service" "default" {
   }
 
   depends_on = [
-    google_org_policy_policy.cloud_run_public
+    google_org_policy_policy.cloud_run_public,
+    time_sleep.wait_for_org_policy
   ]
 }
 
