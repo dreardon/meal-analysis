@@ -42,3 +42,6 @@ __pycache__/
 .env
 notes.txt
 agent-details.md
+agent_engine_id.txt
+agent_identity.txt
+agent.zip

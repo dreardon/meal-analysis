@@ -19,7 +19,14 @@ resource "google_cloud_run_v2_service" "default" {
   invoker_iam_disabled = true
   ingress  = "INGRESS_TRAFFIC_ALL"
 
+  scaling {
+    min_instance_count = 0
+    max_instance_count = 1
+    manual_instance_count = 0
+  }
+
   template {
+
     containers {
       image = var.app_image
       
@@ -66,6 +73,14 @@ resource "google_cloud_run_v2_service" "default" {
     google_org_policy_policy.cloud_run_public,
     time_sleep.wait_for_org_policy
   ]
+
+  lifecycle {
+    ignore_changes = [
+      client,
+      client_version,
+      template[0].containers[0].env,
+    ]
+  }
 }
 
 
@@ -73,7 +88,7 @@ resource "google_cloud_run_v2_service" "default" {
 resource "null_resource" "link_agent_engine" {
   triggers = {
     service_id = google_cloud_run_v2_service.default.id
-    always_run = timestamp()
+    agent_id   = null_resource.deploy_agent.id
   }
 
   provisioner "local-exec" {

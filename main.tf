@@ -2,11 +2,11 @@ terraform {
   required_providers {
     google = {
       source  = "hashicorp/google"
-      version = "~> 6.0"
+      version = "~> 7.0"
     }
     google-beta = {
       source  = "hashicorp/google-beta"
-      version = "~> 6.0"
+      version = "~> 7.0"
     }
     archive = {
       source  = "hashicorp/archive"
@@ -40,6 +40,10 @@ resource "google_project" "default" {
   project_id      = var.project_id
   billing_account = var.billing_account
   deletion_policy = "DELETE"
+
+  lifecycle {
+    ignore_changes = [org_id]
+  }
 }
 
 # Enable APIs
@@ -81,7 +85,7 @@ resource "time_sleep" "wait_for_org_policy" {
 
 # Get project info for service account
 data "google_project" "project" {
-  project_id = google_project.default.project_id
+  project_id = var.project_id
 }
 
 # Grant Storage Object Viewer to default compute service account (used by Cloud Build)
